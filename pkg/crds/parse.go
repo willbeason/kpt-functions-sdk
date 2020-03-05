@@ -11,28 +11,18 @@ func Parse(spec v1.CustomResourceDefinitionSpec) definition.Definition {
 	// TODO(willbeason): Don't assume the first version is the only desired one.
 	version := spec.Versions[0]
 	schema := version.Schema.OpenAPIV3Schema
-	def := definition.Object{
-		Meta: definition.Meta{
-			Name:        spec.Names.Kind,
-			Package:     fmt.Sprintf("%s.%s", spec.Group, version.Name),
-			Description: schema.Description,
-		},
-		Properties: make(map[string]definition.Property),
-		IsKubernetesObject: true,
-		GroupVersionKinds: gvks(spec.Group, spec.Names.Kind, spec.Versions),
-	}
 
-	// Assume the CRD contains properties.
-	for name, property := range schema.Properties {
-		def.Properties[name] = parseProperty(property)
+	// Assume the CRD is for a Kubernetes Object.
+	// TODO(willbeason): Ensure the fields as required by the Kubernetes API
+	//  conventions exist, even if not explicitly defined.
+	o := parseObject(*schema)
+	o.Meta = definition.Meta{
+		Name:        spec.Names.Kind,
+		Package:     fmt.Sprintf("%s.%s", spec.Group, version.Name),
+		Description: schema.Description,
 	}
-	for _, name := range schema.Required {
-		p := def.Properties[name]
-		p.Required = true
-		def.Properties[name] = p
-	}
-
-	return def
+	o.GroupVersionKinds = gvks(spec.Group, spec.Names.Kind, spec.Versions)
+	return o
 }
 
 func gvks(group string, kind string, versions []v1.CustomResourceDefinitionVersion) []definition.GroupVersionKind {

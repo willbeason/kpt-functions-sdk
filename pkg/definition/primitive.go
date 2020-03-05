@@ -1,6 +1,7 @@
 package definition
 
 const (
+	NULL    = "null"
 	BOOLEAN = "boolean"
 	INTEGER = "integer"
 	NUMBER  = "number"
