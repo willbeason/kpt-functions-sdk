@@ -91,21 +91,21 @@ func Indent(s string) string {
 
 func getRefs(definitions []definition.Definition) []definition.Ref {
 	var refs []definition.Ref
-	for _, definition := range definitions {
-		refs = append(refs, definition.Imports()...)
+	for _, d := range definitions {
+		refs = append(refs, d.Imports()...)
 	}
 	return refs
 }
 
 // PrintDefinition implements Language.
-func (ts TypeScript) PrintDefinition(def definition.Definition) string {
-	switch d := def.(type) {
+func (ts TypeScript) PrintDefinition(d definition.Definition) string {
+	switch t := d.(type) {
 	case definition.Object:
-		return ts.typeScriptObject(d)
+		return ts.typeScriptObject(t)
 	case definition.Alias:
-		return typeScriptAlias(d)
+		return typeScriptAlias(t)
 	default:
-		panic(fmt.Sprintf("unknown deinition type %T", d))
+		panic(fmt.Sprintf("unknown deinition type %T", t))
 	}
 }
 
