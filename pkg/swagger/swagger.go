@@ -22,7 +22,8 @@ import (
 
 // ParseSwagger parses a Swagger map into an array of Definitions.
 //
-// Returns Definitions are sorted by fully-qualified name and amap from all References to Definitions to the Definitions.
+// Returns Definitions are sorted by fully-qualified name and a map from all
+// References to Definitions.
 func ParseSwagger(swagger map[string]interface{}) ([]definition.Definition, map[definition.Ref]definition.Object) {
 	definitions := maps.GetRequiredMap("definitions", swagger)
 	var result []definition.Definition
