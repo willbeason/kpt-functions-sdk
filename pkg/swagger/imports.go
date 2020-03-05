@@ -15,10 +15,11 @@
 package swagger
 
 import (
+	"github.com/willbeason/typegen/pkg/definition"
 	"strings"
 )
 
-func refMatches(ref Ref, filter []string) bool {
+func refMatches(ref definition.Ref, filter []string) bool {
 	fullName := ref.Name
 	if ref.Package != "" {
 		fullName = ref.Package + "." + fullName
@@ -42,19 +43,19 @@ func refMatches(ref Ref, filter []string) bool {
 }
 
 // FilterDefinitions returns the filtered subset of Definitions and their transitive dependencies.
-func FilterDefinitions(filters []string, allPackages map[string][]Definition) map[string][]Definition {
+func FilterDefinitions(filters []string, allPackages map[string][]definition.Definition) map[string][]definition.Definition {
 	// Record all definitions by their reference.
-	allDefinitions := make(map[Ref]Definition)
+	allDefinitions := make(map[definition.Ref]definition.Definition)
 	// Record all package-level dependencies.
-	allDependencies := make(map[Ref]map[Ref]bool)
+	allDependencies := make(map[definition.Ref]map[definition.Ref]bool)
 	for _, definitions := range allPackages {
-		for _, definition := range definitions {
-			ref := definition.Meta().ToRef()
+		for _, d := range definitions {
+			ref := d.Metadata().ToRef()
 			// Map reference to its definition.
-			allDefinitions[ref] = definition
+			allDefinitions[ref] = d
 			// Determine dependencies for this definition.
-			allDependencies[ref] = make(map[Ref]bool)
-			imports := definition.Imports()
+			allDependencies[ref] = make(map[definition.Ref]bool)
+			imports := d.Imports()
 			for _, i := range imports {
 				allDependencies[ref][i] = true
 			}
@@ -62,11 +63,11 @@ func FilterDefinitions(filters []string, allPackages map[string][]Definition) ma
 	}
 
 	// Record Refs matching filters.
-	var refs []Ref
+	var refs []definition.Ref
 	for _, definitions := range allPackages {
-		for _, definition := range definitions {
+		for _, d := range definitions {
 			for _, filter := range filters {
-				ref := definition.Meta().ToRef()
+				ref := d.Metadata().ToRef()
 				if refMatches(ref, strings.Split(filter, "*")) {
 					refs = append(refs, ref)
 					break
@@ -76,7 +77,7 @@ func FilterDefinitions(filters []string, allPackages map[string][]Definition) ma
 	}
 
 	// Determine set of included Definitions and their transitive dependencies.
-	definitions := make(map[Ref]Definition)
+	definitions := make(map[definition.Ref]definition.Definition)
 	for i := 0; i < len(refs); i++ {
 		ref := refs[i]
 		if _, found := definitions[ref]; found {
@@ -98,9 +99,9 @@ func FilterDefinitions(filters []string, allPackages map[string][]Definition) ma
 	}
 
 	// Fill in included Definitions.
-	result := make(map[string][]Definition)
-	for ref, definition := range definitions {
-		result[ref.Package] = append(result[ref.Package], definition)
+	result := make(map[string][]definition.Definition)
+	for ref, d := range definitions {
+		result[ref.Package] = append(result[ref.Package], d)
 	}
 	return result
 }

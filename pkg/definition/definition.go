@@ -12,21 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package swagger
+package definition
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Definition corresponds to a specific type in a swagger.json file. This includes all types in the "definitions" map
 // as well as any nested types.
 type Definition interface {
-	// Meta returns the metadata for this Definition.
-	Meta() DefinitionMeta
+	// Metadata returns the metadata for this Definition.
+	Metadata() Meta
 	// Imports are the imports required to use this Definition.
 	Imports() []Ref
 }
 
-// DefinitionMeta holds metadata common to all definitions.
-type DefinitionMeta struct {
+// Metadata holds metadata common to all definitions.
+type Meta struct {
 	// Name is the name of the definition being declared.
 	Name string
 	// Package is the APIVersion containing this definition.
@@ -37,7 +39,12 @@ type DefinitionMeta struct {
 	Description string
 }
 
-func (d DefinitionMeta) ToRef() Ref {
+func (d Meta) Metadata() Meta {
+	return d
+}
+
+// ToRef returns a reference to the type containing this Meta.
+func (d Meta) ToRef() Ref {
 	return Ref{
 		Name:    d.Name,
 		Package: d.Package,
@@ -46,5 +53,5 @@ func (d DefinitionMeta) ToRef() Ref {
 
 // FullName implements Definition.
 func FullName(d Definition) string {
-	return fmt.Sprintf("%s.%s", d.Meta().Package, d.Meta().Name)
+	return fmt.Sprintf("%s.%s", d.Metadata().Package, d.Metadata().Name)
 }

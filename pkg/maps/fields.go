@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package swagger
+package maps
 
 import "fmt"
 
-func getString(key string, o map[string]interface{}) (string, bool) {
+func GetString(key string, o map[string]interface{}) (string, bool) {
 	v, hasKey := o[key]
 	if !hasKey {
 		return "", false
@@ -28,15 +28,15 @@ func getString(key string, o map[string]interface{}) (string, bool) {
 	return s, true
 }
 
-func getRequiredString(key string, o map[string]interface{}) string {
-	s, hasKey := getString(key, o)
+func GetRequiredString(key string, o map[string]interface{}) string {
+	s, hasKey := GetString(key, o)
 	if !hasKey {
 		panic(fmt.Sprintf("missing required field %s: %+v", key, o))
 	}
 	return s
 }
 
-func getStringArray(key string, o map[string]interface{}) ([]string, bool) {
+func GetStringArray(key string, o map[string]interface{}) ([]string, bool) {
 	v, hasKey := o[key]
 	if !hasKey {
 		return nil, false
@@ -58,7 +58,7 @@ func getStringArray(key string, o map[string]interface{}) ([]string, bool) {
 	return stringArray, true
 }
 
-func getMap(key string, o map[string]interface{}) (map[string]interface{}, bool) {
+func GetMap(key string, o map[string]interface{}) (map[string]interface{}, bool) {
 	v, hasKey := o[key]
 	if !hasKey {
 		return nil, false
@@ -71,8 +71,8 @@ func getMap(key string, o map[string]interface{}) (map[string]interface{}, bool)
 	return m, true
 }
 
-func getRequiredMap(key string, o map[string]interface{}) map[string]interface{} {
-	m, hasKey := getMap(key, o)
+func GetRequiredMap(key string, o map[string]interface{}) map[string]interface{} {
+	m, hasKey := GetMap(key, o)
 	if !hasKey {
 		panic(fmt.Sprintf("missing required field %s: %+v", key, o))
 	}

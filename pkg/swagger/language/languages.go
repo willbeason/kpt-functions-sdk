@@ -14,7 +14,9 @@
 
 package language
 
-import "github.com/willbeason/typegen/pkg/swagger"
+import (
+	"github.com/willbeason/typegen/pkg/definition"
+)
 
 // Language implements the minimum required to print client code for a Definition in a particular programming language.
 //
@@ -24,13 +26,13 @@ import "github.com/willbeason/typegen/pkg/swagger"
 //
 type Language interface {
 	// File returns the relative path to definition's client code.
-	File(definition swagger.Definition) string
+	File(definition definition.Definition) string
 
 	// PrintHeader prints everything appearing before any Definitions, such as import statements.
 	//
 	// definitions is the set of Definitions to be printed in the current file.
-	PrintHeader(definitions []swagger.Definition) string
+	PrintHeader(definitions []definition.Definition) string
 
 	// PrintDefinition prints a single definition.
-	PrintDefinition(definition swagger.Definition) string
+	PrintDefinition(definition definition.Definition) string
 }

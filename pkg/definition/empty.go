@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package swagger
+package definition
 
 // Empty represents a type for which we have no type information.
 type Empty struct{}

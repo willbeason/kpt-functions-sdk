@@ -14,21 +14,25 @@
 
 package swagger
 
-import "sort"
+import (
+	"github.com/willbeason/typegen/pkg/definition"
+	"github.com/willbeason/typegen/pkg/maps"
+	"sort"
+)
 
 // ParseSwagger parses a Swagger map into an array of Definitions.
 //
 // Returns Definitions are sorted by fully-qualified name and amap from all References to Definitions to the Definitions.
-func ParseSwagger(swagger map[string]interface{}) ([]Definition, map[Ref]Object) {
-	definitions := getRequiredMap("definitions", swagger)
-	var result []Definition
+func ParseSwagger(swagger map[string]interface{}) ([]definition.Definition, map[definition.Ref]definition.Object) {
+	definitions := maps.GetRequiredMap("definitions", swagger)
+	var result []definition.Definition
 	p := newParser()
 	for name := range definitions {
-		definition := getRequiredMap(name, definitions)
-		result = append(result, p.parseDefinition(name, definition))
+		d := maps.GetRequiredMap(name, definitions)
+		result = append(result, p.parseDefinition(name, d))
 	}
 	sort.Slice(result, func(i, j int) bool {
-		return FullName(result[i]) < FullName(result[j])
+		return definition.FullName(result[i]) < definition.FullName(result[j])
 	})
 	return result, p.RefObjects
 }

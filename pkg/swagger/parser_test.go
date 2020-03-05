@@ -15,6 +15,7 @@
 package swagger
 
 import (
+	"github.com/willbeason/typegen/pkg/definition"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -23,14 +24,14 @@ import (
 type testCase struct {
 	name     string
 	input    map[string]interface{}
-	expected Type
+	expected definition.Type
 }
 
 func run(t *testing.T, testCases []testCase) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := newParser()
-			result := p.parseType(DefinitionMeta{}, tc.input)
+			result := p.parseType(definition.Meta{}, tc.input)
 
 			if diff := cmp.Diff(tc.expected, result); diff != "" {
 				t.Fatal(diff)
@@ -46,7 +47,7 @@ func TestReferences(t *testing.T) {
 			input: map[string]interface{}{
 				"$ref": "#/definitions/io.k8s.api.core.v1.Pod",
 			},
-			expected: Ref{Package: "io.k8s.api.core.v1", Name: "Pod"},
+			expected: definition.Ref{Package: "io.k8s.api.core.v1", Name: "Pod"},
 		},
 	}
 
@@ -63,7 +64,7 @@ func TestArrays(t *testing.T) {
 				},
 				"type": "array",
 			},
-			expected: Array{Items: KnownPrimitives.String},
+			expected: definition.Array{Items: definition.KnownPrimitives.String},
 		},
 		{
 			name: "array of references",
@@ -73,7 +74,7 @@ func TestArrays(t *testing.T) {
 				},
 				"type": "array",
 			},
-			expected: Array{Items: Ref{Package: "io.k8s.api.core.v1", Name: "Pod"}},
+			expected: definition.Array{Items: definition.Ref{Package: "io.k8s.api.core.v1", Name: "Pod"}},
 		},
 		{
 			name: "array of arrays",
@@ -86,7 +87,7 @@ func TestArrays(t *testing.T) {
 				},
 				"type": "array",
 			},
-			expected: Array{Items: Array{Items: KnownPrimitives.String}},
+			expected: definition.Array{Items: definition.Array{Items: definition.KnownPrimitives.String}},
 		},
 	}
 
@@ -103,7 +104,7 @@ func TestMaps(t *testing.T) {
 				},
 				"type": "object",
 			},
-			expected: Map{Values: KnownPrimitives.Boolean},
+			expected: definition.Map{Values: definition.KnownPrimitives.Boolean},
 		},
 		{
 			name: "array of references",
@@ -113,7 +114,7 @@ func TestMaps(t *testing.T) {
 				},
 				"type": "object",
 			},
-			expected: Map{Values: Ref{Package: "io.k8s.api.core.v1", Name: "Pod"}},
+			expected: definition.Map{Values: definition.Ref{Package: "io.k8s.api.core.v1", Name: "Pod"}},
 		},
 		{
 			name: "map of maps",
@@ -126,7 +127,7 @@ func TestMaps(t *testing.T) {
 				},
 				"type": "object",
 			},
-			expected: Map{Values: Map{Values: KnownPrimitives.Boolean}},
+			expected: definition.Map{Values: definition.Map{Values: definition.KnownPrimitives.Boolean}},
 		},
 	}
 
@@ -140,12 +141,12 @@ func TestObjects(t *testing.T) {
 			input: map[string]interface{}{
 				"type": "object",
 			},
-			expected: Empty{},
+			expected: definition.Empty{},
 		},
 		{
 			name:     "no type or ref",
 			input:    map[string]interface{}{},
-			expected: Empty{},
+			expected: definition.Empty{},
 		},
 	}
 

@@ -16,6 +16,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/willbeason/typegen/pkg/definition"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -65,11 +66,11 @@ var mainCmd = &cobra.Command{
 	},
 }
 
-func printTS(outPath string, refObjects map[swagger.Ref]swagger.Object, definitions []swagger.Definition) error {
-	pkgs := make(map[string][]swagger.Definition)
-	for _, definition := range definitions {
-		pkg := definition.Meta().Package
-		pkgs[pkg] = append(pkgs[pkg], definition)
+func printTS(outPath string, refObjects map[definition.Ref]definition.Object, definitions []definition.Definition) error {
+	pkgs := make(map[string][]definition.Definition)
+	for _, d := range definitions {
+		pkg := d.Metadata().Package
+		pkgs[pkg] = append(pkgs[pkg], d)
 	}
 
 	pkgs = swagger.FilterDefinitions(filters, pkgs)
@@ -84,10 +85,10 @@ func printTS(outPath string, refObjects map[swagger.Ref]swagger.Object, definiti
 			contents = append(contents, header)
 		}
 		sort.Slice(defs, func(i, j int) bool {
-			return swagger.FullName(defs[i]) < swagger.FullName(defs[j])
+			return definition.FullName(defs[i]) < definition.FullName(defs[j])
 		})
-		for _, definition := range defs {
-			contents = append(contents, lang.PrintDefinition(definition))
+		for _, d := range defs {
+			contents = append(contents, lang.PrintDefinition(d))
 		}
 
 		err := ioutil.WriteFile(filepath.Join(outPath, pkg+".ts"), []byte(strings.Join(contents, "\n\n")), 0644)

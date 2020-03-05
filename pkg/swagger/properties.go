@@ -15,57 +15,44 @@
 package swagger
 
 import (
+	"github.com/willbeason/typegen/pkg/definition"
+	"github.com/willbeason/typegen/pkg/maps"
 	"strings"
 )
 
-type Property struct {
-	Type          Type
-	Description   string
-	Required      bool
-	OverrideValue string
-}
 
-func (p Property) withRequired() Property {
-	p.Required = true
-	return p
-}
-
-func (p Property) withType(t Type) Property {
-	p.Type = t
-	return p
-}
 
 // parseProperties parses the []Properties defined by a Model.
 //
 // Returns the contained properties and nested type definitions.
-func (p parser) parseProperties(definitionMeta DefinitionMeta, model map[string]interface{}) (map[string]Property, []Object) {
-	requiredFields, _ := getStringArray("required", model)
+func (p parser) parseProperties(definitionMeta definition.Meta, model map[string]interface{}) (map[string]definition.Property, []definition.Object) {
+	requiredFields, _ := maps.GetStringArray("required", model)
 	required := make(map[string]bool)
 	for _, field := range requiredFields {
 		required[field] = true
 	}
 
-	propertiesMap, hasProperties := getMap("properties", model)
+	propertiesMap, hasProperties := maps.GetMap("properties", model)
 	if !hasProperties {
 		return nil, nil
 	}
 
-	properties := make(map[string]Property)
-	var nestedTypes []Object
+	properties := make(map[string]definition.Property)
+	var nestedTypes []definition.Object
 	for name := range propertiesMap {
 		if isUnsupportedProperty(name) {
 			continue
 		}
 
-		propertyMap := getRequiredMap(name, propertiesMap)
+		propertyMap := maps.GetRequiredMap(name, propertiesMap)
 
-		description, _ := getString("description", propertyMap)
+		description, _ := maps.GetString("description", propertyMap)
 
-		var typ Type
+		var typ definition.Type
 		if isObject(propertyMap) {
 			// This property has "properties", so it is an object with a complex definition.
 			propertyType := strings.Title(name)
-			propertyDefinitionMeta := DefinitionMeta{
+			propertyDefinitionMeta := definition.Meta{
 				Name:        propertyType,
 				Package:     definitionMeta.Package,
 				Namespace:   append(definitionMeta.Namespace, definitionMeta.Name),
@@ -73,7 +60,7 @@ func (p parser) parseProperties(definitionMeta DefinitionMeta, model map[string]
 			}
 			object := p.parseObject(propertyDefinitionMeta, propertyMap)
 			nestedTypes = append(nestedTypes, object)
-			typ = Ref{
+			typ = definition.Ref{
 				Name:    strings.Join(append(propertyDefinitionMeta.Namespace, propertyType), "."),
 				Package: definitionMeta.Package,
 			}
@@ -81,7 +68,7 @@ func (p parser) parseProperties(definitionMeta DefinitionMeta, model map[string]
 			typ = p.parseType(definitionMeta, propertyMap)
 		}
 
-		properties[name] = Property{
+		properties[name] = definition.Property{
 			Type:        typ,
 			Description: description,
 			Required:    required[name],

@@ -16,40 +16,25 @@ package swagger
 
 import (
 	"fmt"
+	"github.com/willbeason/typegen/pkg/definition"
+	"github.com/willbeason/typegen/pkg/maps"
 	"strings"
 )
 
-const (
-	BOOLEAN = "boolean"
-	INTEGER = "integer"
-	NUMBER  = "number"
-	STRING  = "string"
-	ARRAY   = "array"
-	OBJECT  = "object"
-)
 
 // parser parses type definitions.
 type parser struct {
-	RefObjects map[Ref]Object
+	RefObjects map[definition.Ref]definition.Object
 }
 
 func newParser() parser {
 	return parser{
-		RefObjects: make(map[Ref]Object),
+		RefObjects: make(map[definition.Ref]definition.Object),
 	}
 }
 
-// Type represents a swagger.json type in a field declaration.
-type Type interface {
-	// Imports is the set of imports required to use this Type.
-	Imports() []Ref
-
-	// NestedTypes returns the type definitions nested in this type.
-	NestedTypes() []Object
-}
-
 // IsKubernetesObject returns true if we think the type is a KubernetesObject.
-func IsKubernetesObject(refObjects map[Ref]Object, ref Ref) bool {
+func IsKubernetesObject(refObjects map[definition.Ref]definition.Object, ref definition.Ref) bool {
 	if o, found := refObjects[ref]; found {
 		return o.IsKubernetesObject
 	}
@@ -57,7 +42,7 @@ func IsKubernetesObject(refObjects map[Ref]Object, ref Ref) bool {
 }
 
 // parseDefinition parses an entry in the swagger.json definitions map and returns the Definition it contains.
-func (p parser) parseDefinition(key string, definitionMap map[string]interface{}) Definition {
+func (p parser) parseDefinition(key string, definitionMap map[string]interface{}) definition.Definition {
 	keyParts := strings.Split(key, ".")
 	if len(keyParts) < 3 {
 		panic(fmt.Sprintf("keys in definitions must have at least 3 parts: %s", key))
@@ -65,8 +50,8 @@ func (p parser) parseDefinition(key string, definitionMap map[string]interface{}
 
 	name := keyParts[len(keyParts)-1]
 	groupVersion := strings.Join(keyParts[:len(keyParts)-1], ".")
-	description, _ := getString("description", definitionMap)
-	meta := DefinitionMeta{
+	description, _ := maps.GetString("description", definitionMap)
+	meta := definition.Meta{
 		Name:        name,
 		Package:     groupVersion,
 		Description: description,
@@ -77,13 +62,13 @@ func (p parser) parseDefinition(key string, definitionMap map[string]interface{}
 	}
 
 	// We are guaranteed that the alias has no nested types as the type contains no "properties" field.
-	return Alias{
-		DefinitionMeta: meta,
-		Type:           p.parseType(meta, definitionMap),
+	return definition.Alias{
+		Meta: meta,
+		Type: p.parseType(meta, definitionMap),
 	}
 }
 
-func (p parser) parseType(meta DefinitionMeta, property map[string]interface{}) Type {
+func (p parser) parseType(meta definition.Meta, property map[string]interface{}) definition.Type {
 	if isObject(property) {
 		// Structured Objects may or may not define "type": "object", so this check MUST happen before the typeString
 		// switch below.
@@ -92,16 +77,16 @@ func (p parser) parseType(meta DefinitionMeta, property map[string]interface{}) 
 
 	// "$ref" and "type" should not be defined in the same Definition.
 	if _, hasRef := property["$ref"]; hasRef {
-		return newRef(property)
+		return parseRef(property)
 	}
 
-	typeString, _ := getString("type", property)
+	typeString, _ := maps.GetString("type", property)
 	switch typeString {
-	case BOOLEAN, INTEGER, NUMBER, STRING:
+	case definition.BOOLEAN, definition.INTEGER, definition.NUMBER, definition.STRING:
 		return parsePrimitive(typeString, property)
-	case ARRAY:
+	case definition.ARRAY:
 		return p.parseArray(meta, property)
-	case OBJECT:
+	case definition.OBJECT:
 		// TODO(b/142004846): Handle rare edge case of "properties" and "additionalProperties" being defined.
 		if _, hasAdditionalProperties := property["additionalProperties"]; hasAdditionalProperties {
 			return p.newMap(meta, property)
@@ -110,5 +95,5 @@ func (p parser) parseType(meta DefinitionMeta, property map[string]interface{}) 
 
 	// Neither "properties", "$ref" nor "type" is defined, so we have no type information for this field.
 	// Or, "type" is set to a value we don't parse.
-	return Empty{}
+	return definition.Empty{}
 }

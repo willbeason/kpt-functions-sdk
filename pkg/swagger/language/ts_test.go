@@ -15,11 +15,11 @@
 package language
 
 import (
+	"github.com/willbeason/typegen/pkg/definition"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/willbeason/typegen/pkg/swagger"
 )
 
 func expectEqual(t *testing.T, expected, actual string) {
@@ -32,38 +32,38 @@ func expectEqual(t *testing.T, expected, actual string) {
 func TestAlias_Print(t *testing.T) {
 	testCases := []struct {
 		name     string
-		alias    swagger.Alias
+		alias    definition.Alias
 		expected string
 	}{
 		{
 			name: "Empty object",
-			alias: swagger.Alias{
-				DefinitionMeta: swagger.DefinitionMeta{
+			alias: definition.Alias{
+				Meta: definition.Meta{
 					Name:        "Empty",
 					Description: "An empty definition.",
 				},
-				Type: swagger.Empty{},
+				Type: definition.Empty{},
 			},
 			expected: `// An empty definition.
 export type Empty = object;`,
 		},
 		{
 			name: "Number alias",
-			alias: swagger.Alias{
-				DefinitionMeta: swagger.DefinitionMeta{
+			alias: definition.Alias{
+				Meta: definition.Meta{
 					Name: "Quantity",
 				},
-				Type: swagger.KnownPrimitives.Integer,
+				Type: definition.KnownPrimitives.Integer,
 			},
 			expected: `export type Quantity = number;`,
 		},
 		{
 			name: "Map of array alias",
-			alias: swagger.Alias{
-				DefinitionMeta: swagger.DefinitionMeta{
+			alias: definition.Alias{
+				Meta: definition.Meta{
 					Name: "QuantitiesMap",
 				},
-				Type: swagger.Map{Values: swagger.Array{Items: swagger.KnownPrimitives.Integer}},
+				Type: definition.Map{Values: definition.Array{Items: definition.KnownPrimitives.Integer}},
 			},
 			expected: `export type QuantitiesMap = {[key: string]: number[]};`,
 		},
@@ -71,7 +71,7 @@ export type Empty = object;`,
 
 	for _, tc := range testCases {
 		ts := TypeScript{
-			RefObjects: make(map[swagger.Ref]swagger.Object),
+			RefObjects: make(map[definition.Ref]definition.Object),
 		}
 		t.Run(tc.name, func(t *testing.T) {
 			// For Alias types, we expect identical code for both the class and the type.
@@ -83,15 +83,15 @@ export type Empty = object;`,
 func TestModel_Print(t *testing.T) {
 	testCases := []struct {
 		name              string
-		refObjects        map[swagger.Ref]swagger.Object
-		model             swagger.Object
+		refObjects        map[definition.Ref]definition.Object
+		model             definition.Object
 		expected          string
 		expectedInterface string
 	}{
 		{
 			name: "Empty properties",
-			model: swagger.Object{
-				DefinitionMeta: swagger.DefinitionMeta{
+			model: definition.Object{
+				Meta: definition.Meta{
 					Name:        "Empty",
 					Description: "An empty model.",
 				},
@@ -103,14 +103,14 @@ export class Empty {
 		},
 		{
 			name: "One property",
-			model: swagger.Object{
-				DefinitionMeta: swagger.DefinitionMeta{
+			model: definition.Object{
+				Meta: definition.Meta{
 					Name: "Quantity",
 				},
-				Properties: map[string]swagger.Property{
+				Properties: map[string]definition.Property{
 					"value": {
 						Description: "The amount represented by the Quantity.",
-						Type:        swagger.KnownPrimitives.Integer,
+						Type:        definition.KnownPrimitives.Integer,
 						Required:    true,
 					},
 				},
@@ -126,19 +126,19 @@ export class Empty {
 		},
 		{
 			name: "Two properties",
-			model: swagger.Object{
-				DefinitionMeta: swagger.DefinitionMeta{
+			model: definition.Object{
+				Meta: definition.Meta{
 					Name: "Quantity_v2",
 				},
-				Properties: map[string]swagger.Property{
+				Properties: map[string]definition.Property{
 					"value": {
 						Description: "The amount represented by the Quantity_v2.",
-						Type:        swagger.KnownPrimitives.Integer,
+						Type:        definition.KnownPrimitives.Integer,
 						Required:    true,
 					},
 					"unit": {
 						Description: "The unit value is expressed in.",
-						Type:        swagger.KnownPrimitives.String,
+						Type:        definition.KnownPrimitives.String,
 					},
 				},
 			},
@@ -157,38 +157,38 @@ export class Empty {
 		},
 		{
 			name: "Nested types",
-			refObjects: map[swagger.Ref]swagger.Object{
-				swagger.Ref{
+			refObjects: map[definition.Ref]definition.Object{
+				definition.Ref{
 					Package: "api.io.v1",
 					Name:    "Pod.Spec",
-				}: {Properties: map[string]swagger.Property{"required": {Required: true}}},
+				}: {Properties: map[string]definition.Property{"required": {Required: true}}},
 			},
-			model: swagger.Object{
-				DefinitionMeta: swagger.DefinitionMeta{
+			model: definition.Object{
+				Meta: definition.Meta{
 					Name:        "Pod",
 					Package:     "api.io.v1",
 					Description: "a complex Pod model",
 				},
-				Properties: map[string]swagger.Property{
+				Properties: map[string]definition.Property{
 					"spec": {
-						Type: swagger.Ref{
+						Type: definition.Ref{
 							Package: "api.io.v1",
 							Name:    "Pod.Spec",
 						},
 						Description: "The Pod specification.",
 					},
 				},
-				NestedTypes: []swagger.Object{
+				NestedTypes: []definition.Object{
 					{
-						DefinitionMeta: swagger.DefinitionMeta{
+						Meta: definition.Meta{
 							Name:        "Spec",
 							Package:     "api.io.v1",
 							Namespace:   []string{"Pod"},
 							Description: "The Pod specification.",
 						},
-						Properties: map[string]swagger.Property{
+						Properties: map[string]definition.Property{
 							"restartStrategy": {
-								Type: swagger.Ref{
+								Type: definition.Ref{
 									Package: "api.io.v1",
 									Name:    "Pod.Spec.RestartStrategy",
 								},
@@ -196,9 +196,9 @@ export class Empty {
 								Required:    true,
 							},
 						},
-						NestedTypes: []swagger.Object{
+						NestedTypes: []definition.Object{
 							{
-								DefinitionMeta: swagger.DefinitionMeta{
+								Meta: definition.Meta{
 									Name:        "RestartStrategy",
 									Package:     "api.io.v1",
 									Namespace:   []string{"Pod", "Spec"},
@@ -250,17 +250,17 @@ func TestPropertiesTSTypes(t *testing.T) {
 	testCases := []struct {
 		name     string
 		pkg      string
-		property swagger.NamedProperty
+		property definition.NamedProperty
 		expected string
 	}{
 		{
 			name: "Print the field definition for types.go.",
 			pkg:  "api.io.v1",
-			property: swagger.NamedProperty{
+			property: definition.NamedProperty{
 				Name: "spec",
-				Property: swagger.Property{
+				Property: definition.Property{
 					Description: "A description.",
-					Type: swagger.Ref{
+					Type: definition.Ref{
 						Package: "api.io.v1",
 						Name:    "Pod.PodSpec",
 					},
@@ -273,11 +273,11 @@ public spec: Pod.PodSpec;`,
 		{
 			name: "Print the field definition in a different package.",
 			pkg:  "api.io.v1",
-			property: swagger.NamedProperty{
+			property: definition.NamedProperty{
 				Name: "spec",
-				Property: swagger.Property{
+				Property: definition.Property{
 					Description: "A description.",
-					Type: swagger.Ref{
+					Type: definition.Ref{
 						Package: "api.io.v2",
 						Name:    "Pod.PodSpec",
 					},
@@ -303,16 +303,16 @@ public spec: apiIoV2.Pod.PodSpec;`,
 func TestPropertiesTSConstructor(t *testing.T) {
 	testCases := []struct {
 		name     string
-		property swagger.NamedProperty
+		property definition.NamedProperty
 		expected string
 	}{
 		{
 			name: "primitive field",
-			property: swagger.NamedProperty{
+			property: definition.NamedProperty{
 				Name: "spec",
-				Property: swagger.Property{
+				Property: definition.Property{
 					Description: "A description.",
-					Type:        swagger.KnownPrimitives.Integer,
+					Type:        definition.KnownPrimitives.Integer,
 					Required:    true,
 				}},
 			expected: `
@@ -320,11 +320,11 @@ this.spec = desc.spec;`,
 		},
 		{
 			name: "optional primitive field",
-			property: swagger.NamedProperty{
+			property: definition.NamedProperty{
 				Name: "spec",
-				Property: swagger.Property{
+				Property: definition.Property{
 					Description: "A description.",
-					Type:        swagger.KnownPrimitives.Integer,
+					Type:        definition.KnownPrimitives.Integer,
 				},
 			},
 			expected: `
@@ -332,11 +332,11 @@ this.spec = desc.spec;`,
 		},
 		{
 			name: "ref field",
-			property: swagger.NamedProperty{
+			property: definition.NamedProperty{
 				Name: "spec",
-				Property: swagger.Property{
+				Property: definition.Property{
 					Description: "A description.",
-					Type:        swagger.Ref{Name: "io.PodSpec"},
+					Type:        definition.Ref{Name: "io.PodSpec"},
 					Required:    true,
 				},
 			},
@@ -345,11 +345,11 @@ this.spec = desc.spec;`,
 		},
 		{
 			name: "optional ref field",
-			property: swagger.NamedProperty{
+			property: definition.NamedProperty{
 				Name: "spec",
-				Property: swagger.Property{
+				Property: definition.Property{
 					Description: "A description.",
-					Type:        swagger.Ref{Name: "io.PodSpec"},
+					Type:        definition.Ref{Name: "io.PodSpec"},
 				},
 			},
 			expected: `
@@ -357,11 +357,11 @@ this.spec = desc.spec;`,
 		},
 		{
 			name: "array field",
-			property: swagger.NamedProperty{
+			property: definition.NamedProperty{
 				Name: "spec",
-				Property: swagger.Property{
+				Property: definition.Property{
 					Description: "A description.",
-					Type:        swagger.Array{Items: swagger.Ref{Name: "io.PodSpec"}},
+					Type:        definition.Array{Items: definition.Ref{Name: "io.PodSpec"}},
 					Required:    true,
 				},
 			},
@@ -373,7 +373,7 @@ this.spec = desc.spec;`,
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ts := TypeScript{
-				RefObjects: make(map[swagger.Ref]swagger.Object),
+				RefObjects: make(map[definition.Ref]definition.Object),
 			}
 			actual := ts.PrintTSConstructorField("", tc.property)
 
@@ -388,17 +388,17 @@ func TestPropertiesTSInterfaces(t *testing.T) {
 	testCases := []struct {
 		name     string
 		pkg      string
-		property swagger.NamedProperty
+		property definition.NamedProperty
 		expected string
 	}{
 		{
 			name: "Print the field definition for interfaces.go.",
 			pkg:  "api.io.v1",
-			property: swagger.NamedProperty{
+			property: definition.NamedProperty{
 				Name: "spec",
-				Property: swagger.Property{
+				Property: definition.Property{
 					Description: "A description.",
-					Type: swagger.Ref{
+					Type: definition.Ref{
 						Package: "api.io.v1",
 						Name:    "PodSpec",
 					},
@@ -410,11 +410,11 @@ spec: PodSpec;`,
 		},
 		{
 			name: "Print the field definition from type in different package.",
-			property: swagger.NamedProperty{
+			property: definition.NamedProperty{
 				Name: "spec",
-				Property: swagger.Property{
+				Property: definition.Property{
 					Description: "A description.",
-					Type: swagger.Ref{
+					Type: definition.Ref{
 						Package: "api.io.v2",
 						Name:    "PodSpec",
 					},

@@ -15,6 +15,7 @@
 package swagger
 
 import (
+	"github.com/willbeason/typegen/pkg/definition"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -25,8 +26,8 @@ func TestProperties(t *testing.T) {
 	testCases := []struct {
 		name                string
 		input               map[string]interface{}
-		expectedProperties  map[string]Property
-		expectedNestedTypes []Object
+		expectedProperties  map[string]definition.Property
+		expectedNestedTypes []definition.Object
 	}{
 		{
 			name:  "no properties",
@@ -39,9 +40,9 @@ func TestProperties(t *testing.T) {
 					"spec": map[string]interface{}{},
 				},
 			},
-			expectedProperties: map[string]Property{
+			expectedProperties: map[string]definition.Property{
 				"spec": {
-					Type: Empty{},
+					Type: definition.Empty{},
 				},
 			},
 		},
@@ -53,9 +54,9 @@ func TestProperties(t *testing.T) {
 					"spec": map[string]interface{}{},
 				},
 			},
-			expectedProperties: map[string]Property{
+			expectedProperties: map[string]definition.Property{
 				"spec": {
-					Type:     Empty{},
+					Type:     definition.Empty{},
 					Required: true,
 				},
 			},
@@ -69,10 +70,10 @@ func TestProperties(t *testing.T) {
 					},
 				},
 			},
-			expectedProperties: map[string]Property{
+			expectedProperties: map[string]definition.Property{
 				"spec": {
 					Description: "a description",
-					Type:        Empty{},
+					Type:        definition.Empty{},
 				},
 			},
 		},
@@ -87,13 +88,13 @@ func TestProperties(t *testing.T) {
 					"status": map[string]interface{}{},
 				},
 			},
-			expectedProperties: map[string]Property{
+			expectedProperties: map[string]definition.Property{
 				"spec": {
-					Type:     KnownPrimitives.String,
+					Type:     definition.KnownPrimitives.String,
 					Required: true,
 				},
 				"status": {
-					Type: Empty{},
+					Type: definition.Empty{},
 				},
 			},
 		},
@@ -104,20 +105,20 @@ func TestProperties(t *testing.T) {
 					"x-kubernetes-embedded-resource": map[string]interface{}{},
 				},
 			},
-			expectedProperties: map[string]Property{},
+			expectedProperties: map[string]definition.Property{},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := newParser()
-			properties, innerClasses := p.parseProperties(DefinitionMeta{}, tc.input)
+			properties, innerClasses := p.parseProperties(definition.Meta{}, tc.input)
 
 			if diff := cmp.Diff(tc.expectedProperties, properties); diff != "" {
 				t.Fatal(diff)
 			}
 
-			if diff := cmp.Diff(tc.expectedNestedTypes, innerClasses, cmpopts.SortSlices(func(p1, p2 Object) bool {
+			if diff := cmp.Diff(tc.expectedNestedTypes, innerClasses, cmpopts.SortSlices(func(p1, p2 definition.Object) bool {
 				return p1.Name < p2.Name
 			})); diff != "" {
 				t.Fatal(diff)

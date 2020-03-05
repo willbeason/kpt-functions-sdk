@@ -15,6 +15,7 @@
 package swagger
 
 import (
+	"github.com/willbeason/typegen/pkg/definition"
 	"testing"
 
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -27,18 +28,18 @@ func TestParseDefinition(t *testing.T) {
 		name      string
 		modelName string
 		input     map[string]interface{}
-		expected  Definition
+		expected  definition.Definition
 	}{
 		{
 			name:      "Empty declaration",
 			modelName: "io.v1.Empty",
 			input:     map[string]interface{}{},
-			expected: Alias{
-				DefinitionMeta: DefinitionMeta{
+			expected: definition.Alias{
+				Meta: definition.Meta{
 					Name:    "Empty",
 					Package: "io.v1",
 				},
-				Type: Empty{},
+				Type: definition.Empty{},
 			},
 		},
 		{
@@ -47,12 +48,12 @@ func TestParseDefinition(t *testing.T) {
 			input: map[string]interface{}{
 				"$ref": "#/definitions/io.v1.Pod",
 			},
-			expected: Alias{
-				DefinitionMeta: DefinitionMeta{
+			expected: definition.Alias{
+				Meta: definition.Meta{
 					Name:    "Pod",
 					Package: "io.v1alpha1",
 				},
-				Type: Ref{
+				Type: definition.Ref{
 					Package: "io.v1",
 					Name:    "Pod",
 				},
@@ -65,12 +66,12 @@ func TestParseDefinition(t *testing.T) {
 				"type":   "integer",
 				"format": "int32",
 			},
-			expected: Alias{
-				DefinitionMeta: DefinitionMeta{
+			expected: definition.Alias{
+				Meta: definition.Meta{
 					Name:    "Quantity",
 					Package: "io.v1",
 				},
-				Type: KnownPrimitives.Integer,
+				Type: definition.KnownPrimitives.Integer,
 			},
 		},
 		{
@@ -87,18 +88,18 @@ func TestParseDefinition(t *testing.T) {
 					},
 				},
 			},
-			expected: Object{
-				DefinitionMeta: DefinitionMeta{
+			expected: definition.Object{
+				Meta: definition.Meta{
 					Name:        "Pod",
 					Package:     "io.v1",
 					Description: "a simple Pod model",
 				},
-				Properties: map[string]Property{
+				Properties: map[string]definition.Property{
 					"podType": {
-						Type: KnownPrimitives.String,
+						Type: definition.KnownPrimitives.String,
 					},
 					"spec": {
-						Type:        Empty{},
+						Type:        definition.Empty{},
 						Description: "unstructured spec field",
 					},
 				},
@@ -119,38 +120,38 @@ func TestParseDefinition(t *testing.T) {
 					},
 				},
 			},
-			expected: Object{
-				DefinitionMeta: DefinitionMeta{
+			expected: definition.Object{
+				Meta: definition.Meta{
 					Name:        "Pod",
 					Package:     "io.v1",
 					Description: "a complex Pod model",
 				},
-				Properties: map[string]Property{
+				Properties: map[string]definition.Property{
 					"spec": {
-						Type: Ref{
+						Type: definition.Ref{
 							Package: "io.v1",
 							Name:    "Pod.Spec",
 						},
 					},
 				},
-				NestedTypes: []Object{
+				NestedTypes: []definition.Object{
 					{
-						DefinitionMeta: DefinitionMeta{
+						Meta: definition.Meta{
 							Name:      "Spec",
 							Package:   "io.v1",
 							Namespace: []string{"Pod"},
 						},
-						Properties: map[string]Property{
+						Properties: map[string]definition.Property{
 							"restartStrategy": {
-								Type: Ref{
+								Type: definition.Ref{
 									Package: "io.v1",
 									Name:    "Pod.Spec.RestartStrategy",
 								},
 							},
 						},
-						NestedTypes: []Object{
+						NestedTypes: []definition.Object{
 							{
-								DefinitionMeta: DefinitionMeta{
+								Meta: definition.Meta{
 									Name:      "RestartStrategy",
 									Package:   "io.v1",
 									Namespace: []string{"Pod", "Spec"},

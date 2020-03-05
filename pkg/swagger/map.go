@@ -14,36 +14,22 @@
 
 package swagger
 
-// Map is a map from strings to any Type.
-//
-// Corresponds to swagger's Free-Form Object with "additionalProperties" but no "properties" defined.
-type Map struct {
-	// Values is the type of Values in the map. Defined in the "additionalProperties" field.
-	Values Type
-}
+import (
+	"github.com/willbeason/typegen/pkg/definition"
+	"github.com/willbeason/typegen/pkg/maps"
+)
 
-var _ Type = Map{}
 
-func (p parser) newMap(meta DefinitionMeta, o map[string]interface{}) Map {
-	additionalPropertiesMap := getRequiredMap("additionalProperties", o)
+
+func (p parser) newMap(meta definition.Meta, o map[string]interface{}) definition.Map {
+	additionalPropertiesMap := maps.GetRequiredMap("additionalProperties", o)
 	// TODO(b/141928662): Handle map of nested type. Uncommon case.
 	if isObject(additionalPropertiesMap) {
-		return Map{
-			Values: Empty{},
+		return definition.Map{
+			Values: definition.Empty{},
 		}
 	}
-	return Map{
+	return definition.Map{
 		Values: p.parseType(meta, additionalPropertiesMap),
 	}
-}
-
-// Imports implements Type.
-func (m Map) Imports() []Ref {
-	return m.Values.Imports()
-}
-
-// NestedTypes implements Type.
-func (Map) NestedTypes() []Object {
-	// Will change once we support maps of nested type.
-	return nil
 }

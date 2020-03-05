@@ -16,6 +16,7 @@ package language
 
 import (
 	"fmt"
+	"github.com/willbeason/typegen/pkg/definition"
 	"sort"
 	"strings"
 
@@ -24,22 +25,22 @@ import (
 
 // TypeScript implements Language-specific logic for TypeScript.
 type TypeScript struct {
-	RefObjects map[swagger.Ref]swagger.Object
+	RefObjects map[definition.Ref]definition.Object
 }
 
 var _ Language = TypeScript{}
 
 // File implements Language.
-func (ts TypeScript) File(definition swagger.Definition) string {
-	return fmt.Sprintf("%s.ts", definition.Meta().Package)
+func (ts TypeScript) File(definition definition.Definition) string {
+	return fmt.Sprintf("%s.ts", definition.Metadata().Package)
 }
 
 // PrintHeader implements Language.
-func (ts TypeScript) PrintHeader(definitions []swagger.Definition) string {
+func (ts TypeScript) PrintHeader(definitions []definition.Definition) string {
 	if len(definitions) == 0 {
 		return ""
 	}
-	currentPackage := definitions[0].Meta().Package
+	currentPackage := definitions[0].Metadata().Package
 
 	imports := getRefs(definitions)
 
@@ -61,7 +62,7 @@ func (ts TypeScript) PrintHeader(definitions []swagger.Definition) string {
 	// Import KubernetesObject only if there is a KubernetesObject in this package.
 	hasKubernetesObject := false
 	for _, def := range definitions {
-		if swagger.IsKubernetesObject(ts.RefObjects, def.Meta().ToRef()) {
+		if swagger.IsKubernetesObject(ts.RefObjects, def.Metadata().ToRef()) {
 			hasKubernetesObject = true
 		}
 	}
@@ -88,8 +89,8 @@ func Indent(s string) string {
 	return strings.Join(splits, "\n")
 }
 
-func getRefs(definitions []swagger.Definition) []swagger.Ref {
-	var refs []swagger.Ref
+func getRefs(definitions []definition.Definition) []definition.Ref {
+	var refs []definition.Ref
 	for _, definition := range definitions {
 		refs = append(refs, definition.Imports()...)
 	}
@@ -97,22 +98,22 @@ func getRefs(definitions []swagger.Definition) []swagger.Ref {
 }
 
 // PrintDefinition implements Language.
-func (ts TypeScript) PrintDefinition(definition swagger.Definition) string {
-	switch d := definition.(type) {
-	case swagger.Object:
+func (ts TypeScript) PrintDefinition(def definition.Definition) string {
+	switch d := def.(type) {
+	case definition.Object:
 		return ts.typeScriptObject(d)
-	case swagger.Alias:
+	case definition.Alias:
 		return typeScriptAlias(d)
 	default:
 		panic(fmt.Sprintf("unknown deinition type %T", d))
 	}
 }
 
-func typeScriptAlias(a swagger.Alias) string {
+func typeScriptAlias(a definition.Alias) string {
 	return fmt.Sprintf(`%sexport type %s = %s;`, printDescription(a.Description), a.Name, tsType(a.Package, a.Type))
 }
 
-func (ts TypeScript) typeScriptObject(o swagger.Object) string {
+func (ts TypeScript) typeScriptObject(o definition.Object) string {
 	var fields []string
 	var constructors []string
 	for _, property := range o.NamedProperties() {
@@ -181,7 +182,7 @@ func printDescription(description string) string {
 	return strings.Join(parts, "")
 }
 
-func (ts TypeScript) printNamespaceClasses(o swagger.Object) string {
+func (ts TypeScript) printNamespaceClasses(o definition.Object) string {
 
 	if len(o.NestedTypes) == 0 && !o.IsKubernetesObject && len(o.GroupVersionKinds) == 0 {
 		return ""
@@ -237,7 +238,7 @@ export namespace %s {
 }
 
 // printInterface prints the interface for KubernetesObjects.
-func printInterface(o swagger.Object) string {
+func printInterface(o definition.Object) string {
 	var properties []string
 	for _, property := range o.NamedProperties() {
 		if o.GroupVersionKind() != nil {
@@ -266,13 +267,13 @@ func tsPackageAlias(pkg string) string {
 	return strings.Join(splits, "")
 }
 
-func tsType(currentPackage string, t swagger.Type) string {
+func tsType(currentPackage string, t definition.Type) string {
 	switch t2 := t.(type) {
-	case swagger.Empty:
+	case definition.Empty:
 		return "object"
-	case swagger.Primitive:
+	case definition.Primitive:
 		return tsPrimitive(t2)
-	case swagger.Ref:
+	case definition.Ref:
 		// TODO(b/141927141): Handle imported name collisions.
 		//  As-is, a collision happens when the last three elements of package AND the Kind are the same for two
 		//  different Definitions. This is exceedingly rare, and will cause circular references if it occurs.
@@ -280,22 +281,22 @@ func tsType(currentPackage string, t swagger.Type) string {
 			return t2.Name
 		}
 		return fmt.Sprintf("%s.%s", tsPackageAlias(t2.Package), t2.Name)
-	case swagger.Array:
+	case definition.Array:
 		return fmt.Sprintf("%s[]", tsType(currentPackage, t2.Items))
-	case swagger.Map:
+	case definition.Map:
 		return fmt.Sprintf("{[key: string]: %s}", tsType(currentPackage, t2.Values))
 	default:
 		panic(fmt.Sprintf("unknown Type: %T", t2))
 	}
 }
 
-func tsPrimitive(p swagger.Primitive) string {
+func tsPrimitive(p definition.Primitive) string {
 	switch p.Type {
-	case swagger.BOOLEAN:
+	case definition.BOOLEAN:
 		return "boolean"
-	case swagger.INTEGER, swagger.NUMBER:
+	case definition.INTEGER, definition.NUMBER:
 		return "number"
-	case swagger.STRING:
+	case definition.STRING:
 		return "string"
 	}
 
@@ -303,7 +304,7 @@ func tsPrimitive(p swagger.Primitive) string {
 }
 
 // PrintTSTypesField prints the property for the types.ts file for TypeScript.
-func PrintTSTypesField(currentPackage string, property swagger.NamedProperty) string {
+func PrintTSTypesField(currentPackage string, property definition.NamedProperty) string {
 	optional := ""
 	if !property.Required {
 		optional = "?"
@@ -312,15 +313,15 @@ func PrintTSTypesField(currentPackage string, property swagger.NamedProperty) st
 }
 
 // PrintTSConstructorField prints the line in the constructor setting this field.
-func (ts TypeScript) PrintTSConstructorField(currentPackage string, property swagger.NamedProperty) string {
+func (ts TypeScript) PrintTSConstructorField(currentPackage string, property definition.NamedProperty) string {
 	var value string
 	if property.OverrideValue != "" {
 		value = property.OverrideValue
 	} else {
 		value = ts.PrintTSConstructor(currentPackage, property.Type, "desc."+property.Name)
 		if !property.Required {
-			if array, isArray := property.Type.(swagger.Array); isArray {
-				if ref, isRef := array.Items.(swagger.Ref); isRef {
+			if array, isArray := property.Type.(definition.Array); isArray {
+				if ref, isRef := array.Items.(definition.Ref); isRef {
 					if swagger.IsKubernetesObject(ts.RefObjects, ref) {
 						value = fmt.Sprintf("(desc.%s !== undefined) ? %s : undefined", property.Name, value)
 					}
@@ -333,7 +334,7 @@ this.%s = %s;`, property.Name, value)
 }
 
 // PrintTSInterfacesField prints the property for the interfaces.ts file for TypeScript.
-func PrintTSInterfacesField(currentPackage string, property swagger.NamedProperty) string {
+func PrintTSInterfacesField(currentPackage string, property definition.NamedProperty) string {
 	optional := ""
 	if !property.Required {
 		optional = "?"
@@ -341,11 +342,11 @@ func PrintTSInterfacesField(currentPackage string, property swagger.NamedPropert
 	return fmt.Sprintf(`%s%s%s: %s;`, printDescription(property.Description), property.Name, optional, tsType(currentPackage, property.Type))
 }
 
-func (ts TypeScript) PrintTSConstructor(currentPackage string, t swagger.Type, field string) string {
+func (ts TypeScript) PrintTSConstructor(currentPackage string, t definition.Type, field string) string {
 	switch t2 := t.(type) {
-	case swagger.Empty, swagger.Primitive:
+	case definition.Empty, definition.Primitive:
 		return field
-	case swagger.Ref:
+	case definition.Ref:
 		if swagger.IsKubernetesObject(ts.RefObjects, t2) {
 			if t2.Package == currentPackage {
 				return fmt.Sprintf("new %s(%s)", t2.Name, field)
@@ -353,15 +354,15 @@ func (ts TypeScript) PrintTSConstructor(currentPackage string, t swagger.Type, f
 			return fmt.Sprintf("new %s.%s(%s)", tsPackageAlias(t2.Package), t2.Name, field)
 		}
 		return field
-	case swagger.Array:
-		if ref, isRef := t2.Items.(swagger.Ref); isRef {
+	case definition.Array:
+		if ref, isRef := t2.Items.(definition.Ref); isRef {
 			if swagger.IsKubernetesObject(ts.RefObjects, ref) {
 				// TODO(b/141928661): Does not work on arrays of KubernetesObjects which contain arrays of KubernetesObjects.
 				return fmt.Sprintf("%s.map((i) => %s)", field, ts.PrintTSConstructor(currentPackage, t2.Items, "i"))
 			}
 		}
 		return field
-	case swagger.Map:
+	case definition.Map:
 		// TODO(b/141928662): Does not work when the values of the map are KubernetesObjects.
 		return field
 	default:
