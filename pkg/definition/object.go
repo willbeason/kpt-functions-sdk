@@ -68,3 +68,7 @@ func (o Object) Imports() []Ref {
 	}
 	return result
 }
+
+func (o Object) NestedTypes() []Object {
+
+}

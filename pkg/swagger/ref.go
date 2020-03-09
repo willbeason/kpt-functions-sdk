@@ -2,9 +2,10 @@ package swagger
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/willbeason/typegen/pkg/definition"
 	"github.com/willbeason/typegen/pkg/maps"
-	"strings"
 )
 
 func parseRef(r map[string]interface{}) definition.Ref {

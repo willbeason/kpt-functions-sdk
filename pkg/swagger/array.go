@@ -15,11 +15,11 @@
 package swagger
 
 import (
+	"strings"
+
 	"github.com/willbeason/typegen/pkg/definition"
 	"github.com/willbeason/typegen/pkg/maps"
-	"strings"
 )
-
 
 func (p parser) parseArray(definitionMeta definition.Meta, o map[string]interface{}) definition.Array {
 	itemsMap := maps.GetRequiredMap("items", o)

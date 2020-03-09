@@ -15,9 +15,10 @@
 package swagger
 
 import (
+	"sort"
+
 	"github.com/willbeason/typegen/pkg/definition"
 	"github.com/willbeason/typegen/pkg/maps"
-	"sort"
 )
 
 // ParseSwagger parses a Swagger map into an array of Definitions.

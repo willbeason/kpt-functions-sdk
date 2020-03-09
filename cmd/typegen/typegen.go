@@ -16,7 +16,6 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/willbeason/typegen/pkg/definition"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -25,6 +24,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/willbeason/typegen/pkg/definition"
 	"github.com/willbeason/typegen/pkg/swagger"
 	"github.com/willbeason/typegen/pkg/swagger/language"
 )

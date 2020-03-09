@@ -15,8 +15,9 @@
 package swagger
 
 import (
-	"github.com/willbeason/typegen/pkg/definition"
 	"testing"
+
+	"github.com/willbeason/typegen/pkg/definition"
 
 	"github.com/google/go-cmp/cmp/cmpopts"
 

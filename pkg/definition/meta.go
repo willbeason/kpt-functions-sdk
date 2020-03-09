@@ -18,15 +18,6 @@ import (
 	"fmt"
 )
 
-// Definition corresponds to a specific type in a swagger.json file. This includes all types in the "definitions" map
-// as well as any nested types.
-type Definition interface {
-	// Metadata returns the metadata for this Definition.
-	Metadata() Meta
-	// Imports are the imports required to use this Definition.
-	Imports() []Ref
-}
-
 // Metadata holds metadata common to all definitions.
 type Meta struct {
 	// Name is the name of the definition being declared.
@@ -39,10 +30,6 @@ type Meta struct {
 	Description string
 }
 
-func (d Meta) Metadata() Meta {
-	return d
-}
-
 // ToRef returns a reference to the type containing this Meta.
 func (d Meta) ToRef() Ref {
 	return Ref{
@@ -52,6 +39,6 @@ func (d Meta) ToRef() Ref {
 }
 
 // FullName implements Definition.
-func FullName(d Definition) string {
-	return fmt.Sprintf("%s.%s", d.Metadata().Package, d.Metadata().Name)
+func (d Meta) FullName() string {
+	return fmt.Sprintf("%s.%s", d.Package, d.Name)
 }

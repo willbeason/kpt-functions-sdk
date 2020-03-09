@@ -16,9 +16,10 @@ package language
 
 import (
 	"fmt"
-	"github.com/willbeason/typegen/pkg/definition"
 	"sort"
 	"strings"
+
+	"github.com/willbeason/typegen/pkg/definition"
 
 	"github.com/willbeason/typegen/pkg/swagger"
 )

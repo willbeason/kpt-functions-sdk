@@ -15,8 +15,9 @@
 package swagger
 
 import (
-	"github.com/willbeason/typegen/pkg/definition"
 	"strings"
+
+	"github.com/willbeason/typegen/pkg/definition"
 )
 
 func refMatches(ref definition.Ref, filter []string) bool {

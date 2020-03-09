@@ -7,9 +7,9 @@ import (
 
 func parseProperty(prop v1.JSONSchemaProps) definition.Property {
 	return definition.Property{
-		Type:          parseType(prop),
-		Description:   prop.Description,
-		Required:      false,
+		Type:        parseType(prop),
+		Description: prop.Description,
+		Required:    false,
 		// TODO: set override values.
 	}
 }
@@ -35,13 +35,13 @@ func parsePrimitive(ts string, p v1.JSONSchemaProps) definition.Primitive {
 
 func parseArray(p v1.JSONSchemaProps) definition.Array {
 	return definition.Array{
-		Items:  parseType(*p.Items.Schema),
+		Items: parseType(*p.Items.Schema),
 	}
 }
 
 func parseObject(p v1.JSONSchemaProps) definition.Object {
 	def := definition.Object{
-		Properties: make(map[string]definition.Property),
+		Properties:         make(map[string]definition.Property),
 		IsKubernetesObject: true,
 	}
 

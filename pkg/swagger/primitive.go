@@ -19,7 +19,6 @@ import (
 	"github.com/willbeason/typegen/pkg/maps"
 )
 
-
 func parsePrimitive(ts string, p map[string]interface{}) definition.Primitive {
 	format, _ := maps.GetString("format", p)
 	return definition.Primitive{Type: ts, Format: format}

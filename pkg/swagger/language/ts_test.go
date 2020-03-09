@@ -15,9 +15,10 @@
 package language
 
 import (
-	"github.com/willbeason/typegen/pkg/definition"
 	"strings"
 	"testing"
+
+	"github.com/willbeason/typegen/pkg/definition"
 
 	"github.com/google/go-cmp/cmp"
 )

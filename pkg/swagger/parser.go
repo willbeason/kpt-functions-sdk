@@ -16,11 +16,11 @@ package swagger
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/willbeason/typegen/pkg/definition"
 	"github.com/willbeason/typegen/pkg/maps"
-	"strings"
 )
-
 
 // parser parses type definitions.
 type parser struct {

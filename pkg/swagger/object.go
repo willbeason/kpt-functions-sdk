@@ -16,10 +16,10 @@ package swagger
 
 import (
 	"fmt"
+
 	"github.com/willbeason/typegen/pkg/definition"
 	"github.com/willbeason/typegen/pkg/maps"
 )
-
 
 func isObject(m map[string]interface{}) bool {
 	_, result := m["properties"]

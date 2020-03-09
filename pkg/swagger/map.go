@@ -19,8 +19,6 @@ import (
 	"github.com/willbeason/typegen/pkg/maps"
 )
 
-
-
 func (p parser) newMap(meta definition.Meta, o map[string]interface{}) definition.Map {
 	additionalPropertiesMap := maps.GetRequiredMap("additionalProperties", o)
 	// TODO(b/141928662): Handle map of nested type. Uncommon case.

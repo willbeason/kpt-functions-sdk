@@ -15,12 +15,11 @@
 package swagger
 
 import (
+	"strings"
+
 	"github.com/willbeason/typegen/pkg/definition"
 	"github.com/willbeason/typegen/pkg/maps"
-	"strings"
 )
-
-
 
 // parseProperties parses the []Properties defined by a Model.
 //
