@@ -1,35 +1,42 @@
 package jsonschema
 
-// Type is one of five non-null primitive types defined in the JSON Schema
-// specification.
+// Schema is one of five non-null primitive types defined in the JSON Schema
+// specification, the Any Schema, or a Reference to another Schema.
 //
 // https://tools.ietf.org/html/draft-handrews-json-schema-02#section-4.2.1
 //
-// Null and mixed types are not permitted in the Open API schema, so any field
-// will be exactly one of the five non-null primitive types.
+// Null and mixed types are not permitted in the Open API schema.
 //
 // https://swagger.io/docs/specification/data-models/data-types/
-type Type interface {
-	// Children is the Objects defined by this Type.
-	Children() []Type
+type Schema interface {
+	// Subschemas are the in-line Types defined by this Schema.
+	Subschemas() []Schema
+
+	// Name is the unqualified name of the schema.
+	Name() string
+
+	Comment() string
 }
 
 // Any is a schema that does not specify "type".
+//
+// https://swagger.io/docs/specification/data-models/data-types/#any
 type Any struct {
 	Meta
 }
 
-func (a Any) Children() []Type {
+// Subschemas implements Schema.
+func (a Any) Subschemas() []Schema {
 	return nil
 }
 
-// Boolean is Type that may take the value "true" or "false".
+// Boolean is Schema whose instances may take the value "true" or "false".
 type Boolean struct {
 	Meta
 }
 
-// Children implements Type.
-func (b Boolean) Children() []Type {
+// Subschemas implements Schema.
+func (b Boolean) Subschemas() []Schema {
 	return nil
 }
 
@@ -37,34 +44,34 @@ func (b Boolean) Children() []Type {
 // in the OpenAPI Schema.
 //
 // https://swagger.io/docs/specification/data-models/data-types/#numbers
-type NumberFormat int
+type NumberFormat string
 
 const (
-	Float = iota
-	Double
-	Integer
-	Int32
-	Int64
+	None NumberFormat = ""
+	Float = "float"
+	Double = "double"
+	Integer = "integer"
+	Int32 = "int32"
+	Int64 = "int64"
 )
 
-// Number is a numeric Type, specified by the Format.
+// Number is a numeric Schema, specified by the Format.
 type Number struct {
 	Meta
 
 	// Format specifies how the number should be represented.
-	// If unset, defaults to Double.
-	Format *NumberFormat
+	Format NumberFormat
 
-	// TODO(willbeason): Support other specified Number validation per
+	// TODO(willbeason): Support number validation per
 	//  https://swagger.io/docs/specification/data-models/data-types/#numbers
 }
 
-// Children implements Type.
-func (n Number) Children() []Type {
+// Subschemas implements Schema.
+func (n Number) Subschemas() []Schema {
 	return nil
 }
 
-// String is Type consisting of a sequence of Unicode code points.
+// String is Schema defining of a sequence of Unicode code points.
 type String struct {
 	Meta
 
@@ -72,31 +79,47 @@ type String struct {
 	//  https://swagger.io/docs/specification/data-models/data-types/#string
 }
 
-// Array is a Type consisting of a sequence of primitives.
+func (s String) Subschemas() []Schema {
+	return nil
+}
+
+// Array is a Schema defining of a sequence of primitives.
 //
 // https://swagger.io/docs/specification/data-models/data-types/#array
 type Array struct {
 	Meta
 
-	// Items is the type of all members contained in Arrays of this Type.
-	Items Type
+	// Items is the type of all members contained in Arrays of this Schema.
+	Items Schema
 
 	// TODO(willbeason): Support array validation per specification.
 }
 
-// Children implements Type.
-func (a Array) Children() []Type {
-	return []Type{a.Items}
+// Subschemas implements Schema.
+func (a Array) Subschemas() []Schema {
+	return []Schema{a.Items}
 }
 
 // Object is a collection of property/value pairs.
 type Object struct {
 	Meta
 
-	Properties []Type
+	Properties []Schema
 }
 
-// Children implements Type.
-func (o Object) Children() []Type {
+// Subschemas implements Schema.
+func (o Object) Subschemas() []Schema {
 	return o.Properties
+}
+
+// Ref is a reference to another Schema.
+type Ref struct {
+	Meta
+
+	Ref string
+}
+
+// Subschemas implements Schema.
+func (r Ref) Subschemas() []Schema {
+	return nil
 }

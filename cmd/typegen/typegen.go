@@ -16,17 +16,15 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"sort"
-	"strings"
-
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/willbeason/typegen/pkg/definition"
-	"github.com/willbeason/typegen/pkg/swagger"
-	"github.com/willbeason/typegen/pkg/swagger/language"
+	"github.com/willbeason/typegen/pkg/jsonschema"
+	"github.com/willbeason/typegen/pkg/languages/ts"
+	"io/ioutil"
+	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"os"
+	"strings"
 )
 
 var filters []string
@@ -48,57 +46,59 @@ var mainCmd = &cobra.Command{
 			return errors.Wrap(err, "unable to find Swagger file")
 		}
 
-		var swaggerMap map[string]interface{}
-		err = json.Unmarshal(bytes, &swaggerMap)
+		swagger := v1.JSONSchemaProps{}
+		err = json.Unmarshal(bytes, &swagger)
 		if err != nil {
-			return errors.Wrap(err, "unable to parse Swagger file as JSON")
+			return errors.Wrap(err, "unable to parse Swagger file as JSONSchemaProps")
 		}
 
-		definitions, refMap := swagger.ParseSwagger(swaggerMap)
-		outPath := args[1]
+		for fullName, props := range swagger.Definitions {
+			idx := strings.LastIndex(fullName, ".")
 
-		err = os.MkdirAll(outPath, os.ModePerm)
-		if err != nil {
-			return err
+			d, err := jsonschema.Parse(fullName[idx+1:], []string{fullName[:idx]}, props)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("%s\n\n", ts.Print(d))
 		}
 
-		return printTS(outPath, refMap, definitions)
+		return nil
 	},
 }
 
-func printTS(outPath string, refObjects map[definition.Ref]definition.Object, definitions []definition.Definition) error {
-	pkgs := make(map[string][]definition.Definition)
-	for _, d := range definitions {
-		pkg := d.Metadata().Package
-		pkgs[pkg] = append(pkgs[pkg], d)
-	}
-
-	pkgs = swagger.FilterDefinitions(filters, pkgs)
-
-	lang := language.TypeScript{
-		RefObjects: refObjects,
-	}
-	for pkg, defs := range pkgs {
-		var contents []string
-		header := lang.PrintHeader(defs)
-		if header != "" {
-			contents = append(contents, header)
-		}
-		sort.Slice(defs, func(i, j int) bool {
-			return definition.FullName(defs[i]) < definition.FullName(defs[j])
-		})
-		for _, d := range defs {
-			contents = append(contents, lang.PrintDefinition(d))
-		}
-
-		err := ioutil.WriteFile(filepath.Join(outPath, pkg+".ts"), []byte(strings.Join(contents, "\n\n")), 0644)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
+//func printTS(outPath string, refObjects map[definition.Ref]definition.Object, definitions []definition.Definition) error {
+//	pkgs := make(map[string][]definition.Definition)
+//	for _, d := range definitions {
+//		pkg := d.Metadata().Package
+//		pkgs[pkg] = append(pkgs[pkg], d)
+//	}
+//
+//	pkgs = swagger.FilterDefinitions(filters, pkgs)
+//
+//	lang := language.TypeScript{
+//		RefObjects: refObjects,
+//	}
+//	for pkg, defs := range pkgs {
+//		var contents []string
+//		header := lang.PrintHeader(defs)
+//		if header != "" {
+//			contents = append(contents, header)
+//		}
+//		sort.Slice(defs, func(i, j int) bool {
+//			return definition.FullName(defs[i]) < definition.FullName(defs[j])
+//		})
+//		for _, d := range defs {
+//			contents = append(contents, lang.PrintDefinition(d))
+//		}
+//
+//		err := ioutil.WriteFile(filepath.Join(outPath, pkg+".ts"), []byte(strings.Join(contents, "\n\n")), 0644)
+//		if err != nil {
+//			return err
+//		}
+//	}
+//
+//	return nil
+//}
 
 func main() {
 	err := mainCmd.Execute()
